@@ -33,7 +33,7 @@ with col3:
 with col4:
     dvmax = st.slider("Maximum Delta-V:", 0.5, 10.0, 4.0, key=10)
 with col5:
-    searchres = st.slider("Solution Search Resolution (10^-n hr):", -4, 2, -1, key=11)
+    searchres = st.slider("Solution Search Resolution (10^-n hr):", -3, 2, -1, key=11)
 
 col6, col7 = st.columns([1, 1])
 with col6:
