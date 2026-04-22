@@ -12,7 +12,7 @@ col1, col2 = st.columns([1, 1])
 with col1:
     st.subheader("Starting Orbit (Red):")
     ina = st.slider("Size (SMA):", 6500, 50000, value=7000, key=1)
-    ine = st.slider("Shape (ECC): ", 0.0, 0.99, step=0.001, value=0.1, key=2)
+    ine = st.slider("Shape (ECC): ", 0.0, 0.99, step=0.001, value=0.0, key=2)
     inw = st.slider("Orientation of Orbit (AOP): ", 0.0, math.pi*2, step=0.01, value=0.0, key=3)
     intheta = st.slider("Position in Orbit (TA):", 0.0, math.pi*2, step=0.01, value=0.0, key=4)
     
@@ -33,7 +33,14 @@ with col3:
 with col4:
     dvmax = st.slider("Maximum Delta-V:", 0.5, 10.0, 4.0, key=10)
 with col5:
-    searchres = st.slider("Solution Search Resolution (10^-n hr)", -6, 2, -1, key=11)
+    searchres = st.slider("Solution Search Resolution (10^-n hr):", -6, 2, -1, key=11)
+
+col6, col7 = st.columns([1, 1])
+with col6:
+    starttime = st.slider("Departure Time (hr):", 0.0, tof-0.1, 0.0, key=12)
+with col7:
+    endtime = st.slider("Arrival Time (hr):", 0.1-tof, 0.0, 0.0, key=13)
+
 
 mu_earth = 398600
 LU = 10000
@@ -49,8 +56,10 @@ showearth = st.checkbox("Show Earth surface", value=False)
 
 data = pd.DataFrame(columns=["Revolutions", "Orbit Type", "SMA (km)", "Eccentricity", "Delta-V (km/s)", "Closest Approach (km)", "Departure Time (hr)"])
 res = 200
-times = np.arange(0, tof-0.1, 10**searchres)
+times = np.arange(starttime, tof+endtime+10**searchres, 10**searchres)
 numsols = 0
+deptimes = []
+dvs = []
 
 fig = plt.figure()
 for j in times:
@@ -66,6 +75,8 @@ for j in times:
         mmax = mlist[size-1]
 
         for i in range(size):
+            dvm = dvmax
+            bestsol = []
             v1t = v1list[i]*LU/TU
             v2t = v2list[i]*LU/TU
             energy = np.dot(v1t, v1t)/2-mu/np.linalg.norm(r1)
@@ -83,6 +94,9 @@ for j in times:
             #print(dv)
             if dv<dvmax:
                 numsols += 1
+                if dv<dvm:
+                    dvm = dv
+                    bestsol = [j, dv]
                 if energy < 0:
                     otype = "Elliptic"
                 else:
@@ -99,7 +113,10 @@ for j in times:
                         plotSolution(r1*LU, r2*LU, v1list[0]*LU/TU, mu_earth, res, (1, 0, 1))
                     else:
                         plotOrbit(r1, v1list[0]*LU/TU, mu, res, (1, 0, 1), "")
-                plt.plot(np.array([0, r1[0]*LU]), np.array([0, r1[1]*LU]), color=(1, 0, 0), linestyle='dashed')
+                #plt.plot(np.array([0, r1[0]*LU]), np.array([0, r1[1]*LU]), color=(1, 0, 0), linestyle='dashed')
+            if not bestsol == []:
+                deptimes.append(bestsol[0])
+                dvs.append(bestsol[1])
 
 plotOrbit(r1*LU, v1*LU/TU, mu_earth, 500, (1, 0, 0), "Dotted")
 plotOrbit(r2*LU, v2*LU/TU, mu_earth, 500, (0, 0, 1), "Dotted")
@@ -113,6 +130,7 @@ plt.plot(0, 0, 'gx')
 plt.xlabel("X")
 plt.ylabel("Y")
 plt.axis('equal')
+
 #plt.show()
 
 
@@ -120,5 +138,11 @@ plt.axis('equal')
 st.subheader("Outputs:", divider="red")
 st.write("Number of found solutions: ", numsols)
 st.pyplot(fig)
+if numsols > 1:
+    fig2 = plt.figure()
+    plt.scatter(deptimes, dvs)
+    plt.xlabel("Departure Time (hr)")
+    plt.ylabel("Delta-V (km/s)")
+    st.pyplot(fig2)
 st.table(data)
 
