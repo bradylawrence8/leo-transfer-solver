@@ -531,40 +531,9 @@ def mranimateSolution(r1, r2, v1, mu, tof, m, res):
     plt.show()
 
 # plot orbit from state vectors in a 3-d window
-def threedimorbitplot(r1, v1, mu, res, c):
-    E = np.dot(v1, v1)/2-mu/np.linalg.norm(r1)
-    a = -mu/(2*E)
-    h = np.cross(r1, v1)
-    ev = np.cross(v1, h)/mu-r1/np.linalg.norm(r1)
-    e = np.linalg.norm(ev)
-    p = a*(1-e**2)
-    periapsis = p/(1+e)*ev/e
-    I = np.array([1, 0, 0])
-    J = np.array([0, 1, 0])
-    K = np.array([0, 0, 1])
-    N = np.cross(K, h)/np.linalg.norm(np.cross(K, h))
-    if np.dot(ev, K) > 0:
-        w = math.acos(np.dot(N, ev)/e)
-    else:
-        w = 2*math.pi-math.acos(np.dot(N, ev)/e)
-    i = math.acos(np.dot(h, K)/np.linalg.norm(h))
-    if np.dot(I, N) >= 0:
-        o = math.atan(np.dot(J, N)/np.dot(I, N))
-    else:
-        o = math.pi + math.atan(np.dot(J, N)/np.dot(I, N))
-    DCM = np.transpose(np.matmul(rotz(w), np.matmul(rotx(i), rotz(o))))
-    t = np.linspace(0, 2*math.pi+0.01, num=res)
-    coords = np.zeros([res, 3])
-    for z in range(res):
-        r = p/(1+e*math.cos(t[z]))
-        perifocal = np.array([r*math.cos(t[z]), r*math.sin(t[z]), 0])
-        coords[z, :] = np.transpose(np.matmul(DCM, np.transpose(perifocal)))
-    plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c)
-
-# plot Lambert solution trajectory in a 3-d window
-def threedimsolutionplot(r1, r2, v1, m, mu, res, c):
-    if m > 0:
-        threedimorbitplot(r1, v1, mu, res, c)
+def threedimorbitplot(r1, v1, mu, res, c, style):
+    if np.linalg.norm(np.cross([0, 0, 1], np.cross(r1, v1)))==0:
+        plotOrbit(r1, v1, mu, 500, c, style)
     else:
         E = np.dot(v1, v1)/2-mu/np.linalg.norm(r1)
         a = -mu/(2*E)
@@ -587,26 +556,71 @@ def threedimsolutionplot(r1, r2, v1, m, mu, res, c):
         else:
             o = math.pi + math.atan(np.dot(J, N)/np.dot(I, N))
         DCM = np.transpose(np.matmul(rotz(w), np.matmul(rotx(i), rotz(o))))
-        if np.linalg.norm(ev) < 1e-12:
-            w = 0
-            t1 = 0
-            t2 = math.acos(np.dot(r1,r2)/(np.linalg.norm(r1)**2))
-        else:
-            t1 = math.acos((p-np.linalg.norm(r1))/(np.linalg.norm(r1)*e))
-            if np.dot(np.cross(r1,periapsis), np.cross(r1, v1))>0:
-                t1 = 2*math.pi - t1
-            t2 = math.acos((p-np.linalg.norm(r2))/(np.linalg.norm(r2)*e))
-            if np.dot(np.cross(r2,periapsis), np.cross(r1, v1))>0:
-                t2 = 2*math.pi - t2
-            if t1 > t2:
-                t1 = t1 - 2*math.pi
-        t = np.linspace(t1, t2, num=res)
+        t = np.linspace(0, 2*math.pi+0.01, num=res)
         coords = np.zeros([res, 3])
         for z in range(res):
             r = p/(1+e*math.cos(t[z]))
             perifocal = np.array([r*math.cos(t[z]), r*math.sin(t[z]), 0])
             coords[z, :] = np.transpose(np.matmul(DCM, np.transpose(perifocal)))
-        plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c)
+        if style == "Dotted":
+            plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c, linestyle="dotted")
+        elif style == "Dashed":
+            plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c, linestyle="dashed")
+        else:
+            plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c)
+
+# plot Lambert solution trajectory in a 3-d window
+def threedimsolutionplot(r1, r2, v1, m, mu, res, c):
+    if np.linalg.norm(np.cross([0, 0, 1], np.cross(r1, v1)))==0:
+        if m > 0:
+            plotOrbit(r1, v1, mu, 500, c, "")
+        else:
+            plotSolution(r1, r2, v1, mu, res, c)
+    else:
+        if m > 0:
+            threedimorbitplot(r1, v1, mu, res, c, "")
+        else:
+            E = np.dot(v1, v1)/2-mu/np.linalg.norm(r1)
+            a = -mu/(2*E)
+            h = np.cross(r1, v1)
+            ev = np.cross(v1, h)/mu-r1/np.linalg.norm(r1)
+            e = np.linalg.norm(ev)
+            p = a*(1-e**2)
+            periapsis = p/(1+e)*ev/e
+            I = np.array([1, 0, 0])
+            J = np.array([0, 1, 0])
+            K = np.array([0, 0, 1])
+            N = np.cross(K, h)/np.linalg.norm(np.cross(K, h))
+            if np.dot(ev, K) > 0:
+                w = math.acos(np.dot(N, ev)/e)
+            else:
+                w = 2*math.pi-math.acos(np.dot(N, ev)/e)
+            i = math.acos(np.dot(h, K)/np.linalg.norm(h))
+            if np.dot(I, N) >= 0:
+                o = math.atan(np.dot(J, N)/np.dot(I, N))
+            else:
+                o = math.pi + math.atan(np.dot(J, N)/np.dot(I, N))
+            DCM = np.transpose(np.matmul(rotz(w), np.matmul(rotx(i), rotz(o))))
+            if np.linalg.norm(ev) < 1e-12:
+                w = 0
+                t1 = 0
+                t2 = math.acos(np.dot(r1,r2)/(np.linalg.norm(r1)**2))
+            else:
+                t1 = math.acos((p-np.linalg.norm(r1))/(np.linalg.norm(r1)*e))
+                if np.dot(np.cross(r1,periapsis), np.cross(r1, v1))>0:
+                    t1 = 2*math.pi - t1
+                t2 = math.acos((p-np.linalg.norm(r2))/(np.linalg.norm(r2)*e))
+                if np.dot(np.cross(r2,periapsis), np.cross(r1, v1))>0:
+                    t2 = 2*math.pi - t2
+                if t1 > t2:
+                    t1 = t1 - 2*math.pi
+            t = np.linspace(t1, t2, num=res)
+            coords = np.zeros([res, 3])
+            for z in range(res):
+                r = p/(1+e*math.cos(t[z]))
+                perifocal = np.array([r*math.cos(t[z]), r*math.sin(t[z]), 0])
+                coords[z, :] = np.transpose(np.matmul(DCM, np.transpose(perifocal)))
+            plt.plot(coords[:, 0], coords[:, 1], coords[:, 2], color=c)
 
 # returns direction cosine matrix to convert from perifocal coordinates to ECI
 def Perifocal2ECI(r1, v1, mu):
