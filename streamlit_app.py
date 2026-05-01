@@ -175,5 +175,5 @@ with tab1:
 with tab2:
     st.header("User Guide", divider="blue")
     st.subheader("Coming soon, for now use the following link:")
-    st.page_link("https://docs.google.com/document/d/1EUUm4tyJBIBv5B3OnrY04V0w0eEBr8cujETP0FZFKns/edit?usp=sharing", "Documentation")
+    st.page_link("https://docs.google.com/document/d/1EUUm4tyJBIBv5B3OnrY04V0w0eEBr8cujETP0FZFKns/edit?usp=sharing", label="Documentation")
 
